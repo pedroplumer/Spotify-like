@@ -1,14 +1,25 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {Container} from 'react-bootstrap';
+import {AUTH_URL, CLIENT_ID, RESPONSE_TYPE, REDIRECT_URI, SCOPES} from '../api/Constants';
 
-
-const AUTH_URL = "https://accounts.spotify.com/authorize?client_id=8b945ef10ea24755b83ac50cede405a0&response_type=code&redirect_uri=http://localhost:3000&scope=user-read-currently-playing%20user-read-playback-state";
 
 const Login = () => {
+    
+    const [authUrl, setAuthUrl] = useState("");
+
+    useEffect(() => {
+         let urlWithClientId = AUTH_URL.concat("client_id=", CLIENT_ID )
+         let urlWithResponseType =  urlWithClientId.concat("&response_type=", RESPONSE_TYPE)
+         let urlWithRedirectUri =  urlWithResponseType.concat("&redirect_uri=", REDIRECT_URI)
+         let urlWithScope =  urlWithRedirectUri.concat("&scope=", SCOPES.join("%20"))
+         setAuthUrl(urlWithScope);
+    },[])
+   
 
     return (
-        <Container>
-            <a className="btn btn-success btn-large" href={AUTH_URL}>LOGIN TO SPOTIFY</a>
+        <Container className="d-flex justify-content-center align-items-center" 
+            stlye={{minHeight: "100vh"}}>
+            <a className="btn btn-success btn-large" href={authUrl}>LOGIN TO SPOTIFY</a>
         </Container>
       
     )
