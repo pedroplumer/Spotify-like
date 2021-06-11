@@ -19,7 +19,7 @@ const Login = () => {
     return (
         <Container className="d-flex justify-content-center align-items-center" 
             stlye={{minHeight: "100vh"}}>
-            <a className="btn btn-success btn-large" href={authUrl}>LOGIN TO SPOTIFY</a>
+            <a className="btn btn-success btn-large" href={authUrl}>LOGIN TO SPOTIFY</a> 
         </Container>
       
     )
