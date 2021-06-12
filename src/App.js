@@ -4,16 +4,16 @@ import Dashboard from './components/Dashboard';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 function App() {
-  const [token, setToken] = useState(null);
+  const [authCode, setAuthCode] = useState(null);
 
   useEffect(()=>{
     let code = new URLSearchParams(window.location.search).get("code");
-    setToken(code);
+    setAuthCode(code);
   },[])
 
   return (
     <>
-      {token ? <Dashboard/> : <Login/>}
+      {authCode ? <Dashboard code={authCode}/> : <Login/>}
     </>
   );
 }
