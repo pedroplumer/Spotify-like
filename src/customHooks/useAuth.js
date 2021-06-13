@@ -1,12 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 
-
-
 const useAuth = (code) => {
-    const [accessToken, setAccessToken] = useState('');
-    const [refreshToken, setRefreshToken] = useState('');
-    const [expiresIn, setExpiresIn] = useState(61);
+    const [accessToken, setAccessToken] = useState();
+    const [refreshToken, setRefreshToken] = useState();
+    const [expiresIn, setExpiresIn] = useState();
 
     useEffect( async () => {
         try{
@@ -25,7 +23,6 @@ const useAuth = (code) => {
         if(!refreshToken || !expiresIn) return
         const refreshInterval = setInterval( async () => {
             try{
-                console.log('hi')
                 let tokens = await axios.post('http://localhost:3001/refresh', {
                     refreshToken
                 })
@@ -33,7 +30,7 @@ const useAuth = (code) => {
                 setExpiresIn(tokens.data.expiresIn)
             }
             catch(err){
-                console.log(err);
+                window.location= '/'
             }
         }, (expiresIn - 60) * 1000)
 
