@@ -4,6 +4,7 @@ import useAuth from '../customHooks/useAuth';
 import spotifyWebApi from 'spotify-web-api-node';
 import {CLIENT_ID} from '../api/Constants';
 import Track from './Track';
+import Player from './Player';
 
 const spotifyApi = new spotifyWebApi({
     clientId: CLIENT_ID
@@ -13,7 +14,12 @@ const Dashboard = ({code}) => {
     const accessToken = useAuth(code);
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    console.log(searchResults)
+    const [selectedTrack, setSelectedTrack] = useState(null);
+
+    const handleTrackSelect = (track) => {
+        setSelectedTrack(track);
+    }
+    
 
     useEffect(() => {
         if(!accessToken) return
@@ -58,10 +64,10 @@ const Dashboard = ({code}) => {
             onChange={e => setSearch(e.target.value)}/>
             <div className="flex-grow-1 my-2" style={{ overflowY: 'auto'}}>
                 {searchResults.map(track => (
-                    <Track track={track} id={track.uri}/>
+                    <Track track={track} id={track.uri} handleTrackSelect={handleTrackSelect}/>
                 ))}
             </div>
-            <div>Bottom</div>
+            <div><Player accessToken={accessToken} trackUri={selectedTrack?.uri}/></div>
         </Container>
     )
 }
