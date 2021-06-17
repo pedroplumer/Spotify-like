@@ -2,10 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser')
 const SpotifyWebApi = require('spotify-web-api-node');
+const lyricsFinder = require('lyrics-finder');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}))
 
 const REDIRECT_URI = 'http://localhost:3000';
 const CLIENT_ID = '8f340a62ffa247d0a60d2e4d829a73f9';
@@ -53,6 +55,11 @@ app.post('/refresh', async (req, res) => {
         res.sendStatus(400);
     }
 
+})
+
+app.get('/lyrics', async (req,res) => {
+    const lyrics = (await lyricsFinder(req.query.artist, req.query.track)) || "No lyrics found"
+    res.json({lyrics})
 })
 
 app.listen(3001);

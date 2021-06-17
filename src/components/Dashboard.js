@@ -5,6 +5,7 @@ import spotifyWebApi from 'spotify-web-api-node';
 import {CLIENT_ID} from '../api/Constants';
 import Track from './Track';
 import Player from './Player';
+import axios from 'axios';
 
 const spotifyApi = new spotifyWebApi({
     clientId: CLIENT_ID
@@ -15,11 +16,27 @@ const Dashboard = ({code}) => {
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedTrack, setSelectedTrack] = useState(null);
+    const [lyrics, setLyrics] = useState('')
 
     const handleTrackSelect = (track) => {
         setSelectedTrack(track);
+        setSearch('');
+        setLyrics('')
     }
     
+    useEffect( async () => {
+        if(!selectedTrack) return 
+
+        let res = await axios.get('http://localhost:3001/lyrics', {
+            params: {
+                track: selectedTrack.title,
+                artist: selectedTrack.artist
+            }
+        })
+
+        setLyrics(res.data.lyrics)
+
+    }, [selectedTrack])
 
     useEffect(() => {
         if(!accessToken) return
@@ -66,6 +83,11 @@ const Dashboard = ({code}) => {
                 {searchResults.map(track => (
                     <Track track={track} id={track.uri} handleTrackSelect={handleTrackSelect}/>
                 ))}
+                {searchResults.length === 0 && (
+                    <div className="text-center" style={{ whiteSpace: 'pre'}}> 
+                        {lyrics}
+                    </div>
+                )}
             </div>
             <div><Player accessToken={accessToken} trackUri={selectedTrack?.uri}/></div>
         </Container>
