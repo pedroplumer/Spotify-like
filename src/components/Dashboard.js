@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Container, Form} from 'react-bootstrap';
+import {Container, Form, Button} from 'react-bootstrap';
 import useAuth from '../customHooks/useAuth';
 import spotifyWebApi from 'spotify-web-api-node';
 import {CLIENT_ID} from '../api/Constants';
@@ -17,32 +17,14 @@ const Dashboard = ({code}) => {
     const [searchResults, setSearchResults] = useState([]);
     const [selectedTrack, setSelectedTrack] = useState(null);
     const [lyrics, setLyrics] = useState('')
-
-    const handleTrackSelect = (track) => {
-        setSelectedTrack(track);
-        setSearch('');
-        setLyrics('')
-    }
+    const [playlists, setPlaylists] = useState([]);
     
-    useEffect( async () => {
-        if(!selectedTrack) return 
-
-        let res = await axios.get('http://localhost:3001/lyrics', {
-            params: {
-                track: selectedTrack.title,
-                artist: selectedTrack.artist
-            }
-        })
-
-        setLyrics(res.data.lyrics)
-
-    }, [selectedTrack])
-
     useEffect(() => {
         if(!accessToken) return
         spotifyApi.setAccessToken(accessToken);
     }, [accessToken])
-
+    
+    
     useEffect( async () =>  {
         if(!search) return setSearchResults([])
         if(!accessToken) return;
@@ -52,11 +34,7 @@ const Dashboard = ({code}) => {
             let data = await spotifyApi.searchTracks(search);
             let tracks = data.body.tracks.items;
             let formattedTracks = tracks.map((track) => {
-                const smallestAlbumImage = track.album.images.reduce((smallest,image) => {
-                    if(image.height < smallest.height) return image
-                    return smallest
-                }, track.album.images[0])
-                
+                let smallestAlbumImage = getSmallestAlbumImage(track);
                 let formattedArtist = track.artists.map((artist) => {return artist.name}).join(", ");
                 
                 return {
@@ -74,22 +52,83 @@ const Dashboard = ({code}) => {
         }
         return () => cancel = true
     },[search, accessToken])
+    
+    useEffect( async () => {
+        if(!selectedTrack) return 
+        
+        let res = await axios.get('http://localhost:3001/lyrics', {
+            params: {
+                track: selectedTrack.title,
+                artist: selectedTrack.artist
+            }
+        })
+        
+        setLyrics(res.data.lyrics)
+        
+    }, [selectedTrack])
+    
+    const handleTrackSelect = (track) => {
+        setSelectedTrack(track);
+        setSearch('');
+        setLyrics('')
+    }
+    
+    const getSmallestAlbumImage = (track) => {
+        return track.album.images.reduce((smallest,image) => {
+            if(image.height < smallest.height) return image
+            return smallest
+        }, track.album.images[0])
+    }
 
+    const loadPlaylists = async () => {
+        let data = await axios.get('https://api.spotify.com/v1/me/playlists', {
+            headers: {
+                Authorization: 'Bearer ' + accessToken
+            }
+        });
+        setPlaylists(data.data.items)
+    }
+
+    const loadPlaylist = async (tracks) => {
+        let data = await axios.get(tracks.href, {
+            headers: {
+                Authorization: 'Bearer ' + accessToken
+            }
+        });
+        let trackList = data.data.items.map((item) => {
+            let smallestAlbumImage = getSmallestAlbumImage(item.track);
+            let formattedArtist = item.track.artists.map((artist) => {return artist.name}).join(", ");
+            return {
+                artist: formattedArtist,
+                title: item.track.name,
+                uri: item.track.uri,
+                albumUrl: smallestAlbumImage.url
+            }});
+
+        
+        setSearchResults(trackList)
+    }
     return(
-        <Container className="d-flex flex-column py-2" style={{height: '100vh'}}>
-            <Form.Control type='search' placeholder='Search songs/Artists' value={search} 
-            onChange={e => setSearch(e.target.value)}/>
-            <div className="flex-grow-1 my-2" style={{ overflowY: 'auto'}}>
-                {searchResults.map(track => (
-                    <Track track={track} id={track.uri} handleTrackSelect={handleTrackSelect}/>
-                ))}
-                {searchResults.length === 0 && (
-                    <div className="text-center" style={{ whiteSpace: 'pre'}}> 
-                        {lyrics}
-                    </div>
-                )}
+        <Container className="d-flex flex-row py-2">
+            <div className="py-2">
+                <Button onClick={loadPlaylists} variant="outline-success">Playlists</Button>
+                {playlists ? playlists.map((playlist) => <div style={{cursor: "pointer"}} onClick={() => loadPlaylist(playlist.tracks)}>{playlist.name}</div>) : <div>nope</div>}
             </div>
-            <div><Player accessToken={accessToken} trackUri={selectedTrack?.uri}/></div>
+            <Container className="d-flex flex-column py-2" style={{height: '100vh'}}>
+                <Form.Control type='search' placeholder='Search songs/Artists' value={search} 
+                onChange={e => setSearch(e.target.value)}/>
+                <div className="flex-grow-1 my-2" style={{ overflowY: 'auto'}}>
+                    {searchResults.map(track => (
+                        <Track track={track} id={track.uri} handleTrackSelect={handleTrackSelect}/>
+                    ))}
+                    {searchResults.length === 0 && (
+                        <div className="text-center" style={{ whiteSpace: 'pre'}}> 
+                            {lyrics}
+                        </div>
+                    )}
+                </div>
+                <div><Player accessToken={accessToken} trackUri={selectedTrack?.uri}/></div>
+            </Container>
         </Container>
     )
 }
